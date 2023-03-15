@@ -138,56 +138,56 @@ def get_transforms(train):
 
 if __name__ == '__main__':
     # Setting up the device
-	device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    csv_train_file = '../FRCNN/trainset.csv'
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    csv_train_file = "../FRCNN/trainset.csv"
     csv_test_file = '../FRCNN/testset.csv'
     train_dataset = '../FRCNN/Dataset/dataset-yolo/images/augmented'
     test_dataset = '../FRCNN/Dataset/dataset-yolo/images/test'
     labels_dict = create_label_txt(csv_train_file)
 
 	# Define train and test dataset
-	dataset = CardsDataset(dataset_dir = train_dataset, csv_file = csv_train_file,
+    dataset = CardsDataset(dataset_dir = train_dataset, csv_file = csv_train_file,
 							labels_dict = labels_dict, transforms = get_transforms(train = True))
 
-	dataset_test = CardsDataset(dataset_dir = test_dataset, csv_file = csv_test_file,
+    dataset_test = CardsDataset(dataset_dir = test_dataset, csv_file = csv_test_file,
 							labels_dict = labels_dict, transforms = get_transforms(train = False))
 
 	# Split the dataset into train and test
-	torch.manual_seed(1)
-	indices = torch.randperm(len(dataset)).tolist()
-	dataset = torch.utils.data.Subset(dataset, indices[:-test_set_length])
-	dataset_test = torch.utils.data.Subset(dataset_test, indices[-test_set_length:])
+    torch.manual_seed(1)
+    indices = torch.randperm(len(dataset)).tolist()
+    dataset = torch.utils.data.Subset(dataset, indices[:-test_set_length])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[-test_set_length:])
 
 	# Define train and test dataloaders
-	data_loader = torch.utils.data.DataLoader(dataset, batch_size = train_batch_size, shuffle = True,
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size = train_batch_size, shuffle = True,
 					num_workers = 4, collate_fn = utils.collate_fn)
 
-	data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size = test_batch_size, shuffle = False,
+    data_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size = test_batch_size, shuffle = False,
 					num_workers = 4, collate_fn = utils.collate_fn)
 
-	print(f"We have: {len(indices)} images in the dataset, {len(dataset)} are training images and {len(dataset_test)} are test images")
+    print(f"We have: {len(indices)} images in the dataset, {len(dataset)} are training images and {len(dataset_test)} are test images")
 
 
 	# Get the model using helper function
-	model = get_model(num_classes)
-	model.to(device = device)
+    model = get_model(num_classes)
+    model.to(device = device)
 
 	# Construct the optimizer
-	params = [p for p in model.parameters() if p.requires_grad]
-	optimizer = torch.optim.SGD(params, lr = learning_rate, momentum = 0.9, weight_decay = 0.0005)
+    params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.SGD(params, lr = learning_rate, momentum = 0.9, weight_decay = 0.0005)
 
 	# Learning rate scheduler decreases the learning rate by 10x every 3 epochs
-	lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 3, gamma = 0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 3, gamma = 0.1)
 
-	for epoch in range(num_epochs):
+    for epoch in range(num_epochs):
 
-		train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq = 10)
-		lr_scheduler.step()
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq = 10)
+        lr_scheduler.step()
 		# Evaluate on the test dataset
-		evaluate(model, data_loader_test, device = device)
+        evaluate(model, data_loader_test, device = device)
 
-	if not os.path.exists(output_dir):
-		os.mkdir(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
 
 	# Save the model state
-	torch.save(model.state_dict(), output_dir + "/model")
+    torch.save(model.state_dict(), output_dir + "/model")
